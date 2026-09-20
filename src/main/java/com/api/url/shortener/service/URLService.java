@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.api.url.shortener.constants.AppConstant;
 import com.api.url.shortener.dto.URLRequest;
 import com.api.url.shortener.dto.URLResponse;
+import com.api.url.shortener.exception.MaxLimitExceededException;
 import com.api.url.shortener.exception.ResourceNotFound;
 import com.api.url.shortener.exception.ShortCodeNotAvailable;
 import com.api.url.shortener.exception.URLExpirationException;
@@ -26,6 +27,16 @@ public class URLService {
 
 	public String getShotURLCode(Long number) {
 
+//		if(number > Math.pow(62, 6)) {
+//			throw new MaxLimitExceededException("Limit reached!");
+//		}
+
+		long maxValue = 62L * 62 * 62 * 62 * 62 * 62 - 1; // 62^6 - 1 
+
+		if (number < 0 || number > maxValue) {
+			throw new MaxLimitExceededException("Limit reached!");
+		}
+
 		// converting the long string
 		StringBuilder result = new StringBuilder();
 
@@ -34,8 +45,8 @@ public class URLService {
 			result.append(BASE62.charAt(remainder));
 			number = number / 62;
 		}
-
 		return result.reverse().toString();
+
 	}
 
 	public URLResponse saveURLRecord(URLRequest urlRequest) {
@@ -47,7 +58,7 @@ public class URLService {
 				throw new ShortCodeNotAvailable("The short code is available");
 			} else {
 
-				urlRecord.setShortCode (urlRequest.getCustom_alias());
+				urlRecord.setShortCode(urlRequest.getCustom_alias());
 			}
 		} else {
 			Long currentCounter = redisService.get("counter", Long.class);

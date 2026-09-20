@@ -34,4 +34,14 @@ public class CustomExceptionHandler {
 		(new ErrorObject(urlExpirationException.getMessage(),
 				HttpStatus.GONE) , HttpStatus.GONE);
 	}
+	
+	
+	
+	@ExceptionHandler
+	public ResponseEntity<ErrorObject> handleMaxLimitExceededException(MaxLimitExceededException maxLimitExceededException){
+		
+		return new ResponseEntity<ErrorObject>
+		(new ErrorObject(maxLimitExceededException.getMessage(),
+				HttpStatus.BAD_REQUEST) , HttpStatus.BAD_REQUEST);
+	}
 }
