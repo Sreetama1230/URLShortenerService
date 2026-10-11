@@ -26,24 +26,24 @@ public class URLService {
 	private static final String BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 	public String getShotURLCode(Long number) {
+		// for each position 62 possibilities
+		long maxValue = (62 * 62 * 62 * 62 * 62 * 62) - 1; // 62^6 - 1
+		// 62_  62 _ 62 62 62 62 _ _ _ _
 
-//		if(number > Math.pow(62, 6)) {
-//			throw new MaxLimitExceededException("Limit reached!");
-//		}
-
-		long maxValue = 62L * 62 * 62 * 62 * 62 * 62 - 1; // 62^6 - 1 
-
-		if (number < 0 || number > maxValue) {
+		if (number > maxValue) {
 			throw new MaxLimitExceededException("Limit reached!");
 		}
 
 		// converting the long string
 		StringBuilder result = new StringBuilder();
-
+			// decimal -> binary
+		 // 23/2 = 11 23%2 = 1
+		//  11 / 2 = 5 11%2=1
+		//.. 1 1
 		while (number > 0) {
-			int remainder = (int) (number % 62);
+			int remainder = (int) (number % 62); 
 			result.append(BASE62.charAt(remainder));
-			number = number / 62;
+			number = number / 62; 
 		}
 		return result.reverse().toString();
 
@@ -55,19 +55,20 @@ public class URLService {
 
 		if (urlRequest.getCustom_alias() != null) {
 			if (urlRepository.findByShortCode(urlRequest.getCustom_alias()).isPresent()) {
-				throw new ShortCodeNotAvailable("The short code is available");
+				throw new ShortCodeNotAvailable("The short code is not available");
 			} else {
 
 				urlRecord.setShortCode(urlRequest.getCustom_alias());
 			}
 		} else {
+			// counter ->> redis - 1
 			Long currentCounter = redisService.get("counter", Long.class);
 			if (currentCounter == null) {
 				redisService.set("counter", AppConstant.COUNTER);
 				urlRecord.setShortCode(getShotURLCode(AppConstant.COUNTER));
 			} else {
+				// sending the counter after incrementation
 				currentCounter = redisService.increment("counter");
-//				redisService.set("counter", currentCounter);
 				urlRecord.setShortCode(getShotURLCode(currentCounter));
 			}
 
@@ -83,7 +84,7 @@ public class URLService {
 			throw new ResourceNotFound("No record found!");
 		} else {
 			if (record.get().getExpiryAt().isBefore(LocalDateTime.now())) {
-				throw new URLExpirationException("shorturl is expired please create new one");
+				throw new URLExpirationException("shorturl is expired please create a new one");
 			}
 		}
 		return record.get().getLongURL();
